@@ -1,29 +1,33 @@
-import useSWR from 'swr'
+// pages/index.js
 
-const fetcher = (query) =>
-  fetch('/api/graphql', {
-    method: 'POST',
-    headers: {
-      'Content-type': 'application/json',
-    },
-    body: JSON.stringify({ query }),
-  })
-    .then((res) => res.json())
-    .then((json) => json.data)
+import { gql, useQuery } from "@apollo/client";
+import withApollo from "../lib/withApollo";
 
-export default function Index() {
-  const { data, error } = useSWR('{ users { name } }', fetcher)
+const QUERY = gql`
+  query resultSet {
+    results {
+      hits {
+        items {
+          id
+        }
+      }
+    }
+  }
+`;
 
-  if (error) return <div>Failed to load</div>
-  if (!data) return <div>Loading...</div>
+const Index = () => {
+  const { loading, previousData, data = previousData } = useQuery(QUERY);
 
-  const { users } = data
-
+  if (loading || !data) {
+    return <h1>loading...</h1>;
+  }
   return (
-    <div>
-      {users.map((user, i) => (
-        <div key={i}>{user.name}</div>
-      ))}
-    </div>
-  )
-}
+    <>
+      {data.results.hits.items.map((item) => {
+        return <div key={item.id}>hit id: {item.id}</div>;
+      })}
+    </>
+  );
+};
+
+export default withApollo(Index);
